@@ -13,10 +13,10 @@ class EyeOfSauronWidgetState extends State<EyeOfSauronWidget> {
   double _eyeHeight = 300;
   bool _isBlinking = false;
 
-  static const particlesPerFrame = 95;
+  static const particlesPerFrame = 30;
   static const pupil = Size(9, 46);
   static const eye = Size(200, 125);
-  static const double speed = 60.0;
+  static const double speed = 40.0;
 
   // Public accessors for testing
   Timer? get blinkTimer => _blinkTimer;
@@ -45,6 +45,10 @@ class EyeOfSauronWidgetState extends State<EyeOfSauronWidget> {
       _particles.removeWhere((particle) {
         particle.x += particle.dx;
         particle.y += particle.dy;
+        
+        // Add current position to history
+        particle.addPositionToHistory();
+        
         return particle.radius > particle.maxRadius;
       });
     });
@@ -112,7 +116,7 @@ class EyeOfSauronWidgetState extends State<EyeOfSauronWidget> {
       height: _eyeHeight,
       clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
-        color: const Color(0x06000000),
+        color: const Color(0x00000000),
       ),
       child: CustomPaint(
         painter: EyePainter(particles: _particles),

@@ -7,7 +7,7 @@ class EyeOfSauronScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0x00000000),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

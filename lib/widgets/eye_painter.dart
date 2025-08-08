@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:eye_of_sauron_flutter/models/eye_particle.dart';
 
@@ -11,24 +12,84 @@ class EyePainter extends CustomPainter {
     canvas.save();
     canvas.translate(size.width / 2, size.height / 2);
 
+    // Draw particle trails first (so they appear behind current particles)
     for (final particle in particles) {
-      final progress = (particle.radius - particle.minRadius) / 
-                     (particle.maxRadius - particle.minRadius) * 100;
+      _drawParticleTrail(canvas, particle);
+    }
+
+    // Draw current particles
+    for (final particle in particles) {
+      _drawParticle(canvas, particle);
+    }
+
+    _drawFieryAura(canvas, size);
+    
+    canvas.restore();
+  }
+  
+  void _drawFieryAura(Canvas canvas, Size size) {
+    final gradient = RadialGradient(
+      colors: [
+        const Color(0x00000000).withValues(alpha: 0.6),
+        const Color(0xFFFF5100).withValues(alpha: 0.6),
+        const Color(0xFFFF0000).withValues(alpha: 0.07),
+        const Color(0x00000000),
+      ],
+      stops: const [0.0, 0.3, 0.7, 1.0],
+      radius: 0.182,
+    );
+
+    final radius = max(size.width, size.height) * 0.9;
+
+    final paint = Paint()
+      ..shader = gradient.createShader(
+        Rect.fromCircle(center: Offset.zero, radius: radius),
+      );
+    
+    canvas.drawCircle(Offset.zero, radius, paint);
+  }
+
+  void _drawParticle(Canvas canvas, EyeParticle particle) {
+    final progress = (particle.radius - particle.minRadius) / 
+                   (particle.maxRadius - particle.minRadius) * 100;
+    
+    final green = _getGreen(progress);
+    final opacity = progress > 70 ? 1.0 - (progress - 70) / 30 : 1.0;
+    
+    canvas.drawRect(
+      Rect.fromCenter(
+        center: Offset(particle.x, particle.y),
+        width: 1,
+        height: 1,
+      ),
+      Paint()..color = Color.fromRGBO(255, green, 0, opacity),
+    );
+  }
+
+  void _drawParticleTrail(Canvas canvas, EyeParticle particle) {
+    final progress = (particle.radius - particle.minRadius) / 
+                   (particle.maxRadius - particle.minRadius) * 100;
+    
+    final green = _getGreen(progress);
+    final baseOpacity = progress > 70 ? 1.0 - (progress - 70) / 30 : 1.0;
+    
+    // Draw trail positions with fading opacity
+    for (int i = 0; i < particle.positionHistory.length; i++) {
+      final history = particle.positionHistory[i];
+      final position = Offset(history['x'] as double, history['y'] as double);
       
-      final green = _getGreen(progress);
-      final opacity = progress > 70 ? 1.0 - (progress - 70) / 30 : 1.0;
+      // Calculate trail opacity (fades with age)
+      final opacity = baseOpacity * (0.8 + 0.2 * (i / particle.positionHistory.length));
       
       canvas.drawRect(
         Rect.fromCenter(
-          center: Offset(particle.x, particle.y),
-          width: 1,
-          height: 1,
+          center: position,
+          width: 1.7,
+          height: 1.7,
         ),
         Paint()..color = Color.fromRGBO(255, green, 0, opacity),
       );
     }
-    
-    canvas.restore();
   }
 
   int _getGreen(double progress) {
